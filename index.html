@@ -1,134 +1,170 @@
 <!DOCTYPE html><html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ArtBrand Premium</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"><style>
-:root{--bg:#0D0D0D;--card:#161616;--gold:#C8A96A;--text:#fff;--muted:#aaa;}
-body{margin:0;background:var(--bg);color:var(--text);font-family:'Inter';}
-header{display:flex;justify-content:space-between;align-items:center;padding:20px 50px;border-bottom:1px solid #222;position:sticky;top:0;background:rgba(13,13,13,0.9);backdrop-filter:blur(10px);}
-h1{font-family:'Playfair Display';}
-nav a{margin:0 15px;color:var(--muted);text-decoration:none;}
-.hero{height:80vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;animation:fadeIn 2s;}
-.hero h2{font-size:50px;font-family:'Playfair Display';}
-.gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:25px;padding:60px;}
-.card{background:var(--card);padding:15px;border-radius:16px;transition:.4s;opacity:0;transform:translateY(30px);} 
-.card.show{opacity:1;transform:translateY(0);} 
-.card:hover{transform:scale(1.03);} 
-.card img{width:100%;border-radius:12px;}
-button{background:var(--gold);border:none;padding:10px 15px;margin-top:10px;cursor:pointer;border-radius:6px;}
-.story,.reviews{padding:80px 40px;text-align:center;max-width:900px;margin:auto;}
-.footer{padding:40px;text-align:center;border-top:1px solid #222;color:#888;}
-#adminPanel{display:none;position:fixed;right:20px;top:80px;background:#111;padding:20px;border-radius:12px;width:300px;}
-input,textarea{width:100%;padding:10px;margin:8px 0;background:#1a1a1a;border:none;color:white;border-radius:6px;}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-</style></head><body>
-<header>
-<h1>ArtBrand</h1>
-<nav>
-<a href="#">Home</a>
-<a href="#gallery">Gallery</a>
-<a href="#story">Story</a>
-<a href="#reviews">Reviews</a>
-</nav>
-<button onclick="toggleAdmin()">⚙️</button>
-</header><section class="hero">
-<h2>Art that Speaks</h2>
-<p>Minimal. Timeless. Collectible.</p>
-</section><section class="gallery" id="gallery"></section><section class="story" id="story">
-<h2>Brand Story</h2>
-<p>Minimalism meets emotion in every piece.</p>
-</section><section class="reviews" id="reviews">
-<h2>Client Reviews</h2>
-<div id="reviewList"></div>
-<input id="rname" placeholder="Your Name">
-<textarea id="rmsg" placeholder="Your Review"></textarea>
-<button onclick="addReview()">Submit</button>
-</section><div id="adminPanel">
-<h3>Admin Login</h3>
-<input id="email" placeholder="Email">
-<input id="password" type="password" placeholder="Password">
-<button onclick="login()">Login</button>
-<hr>
-<h3>Add Artwork</h3>
-<input id="title" placeholder="Title">
-<input id="price" placeholder="Price">
-<input id="image" placeholder="Image URL">
-<button onclick="addArt()">Upload</button>
-</div><footer class="footer">
-<p>© 2026 ArtBrand</p>
-</footer><script src="https://checkout.razorpay.com/v1/checkout.js"></script><script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
-import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Arté — Premium Art Store</title><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"><script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-const firebaseConfig={apiKey:"YOUR_KEY",authDomain:"YOUR_DOMAIN",projectId:"YOUR_PROJECT"};
-const app=initializeApp(firebaseConfig);
-const db=getFirestore(app);
-const auth=getAuth(app);
+const firebaseConfig = {
+  apiKey: "YOUR_KEY",
+  authDomain: "YOUR_DOMAIN",
+  projectId: "YOUR_PROJECT_ID"
+};
 
-window.toggleAdmin=()=>{
- adminPanel.style.display=adminPanel.style.display==='block'?'none':'block';
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+window.db = db;
+window.auth = auth;
+window.firebaseFns = { collection, addDoc, onSnapshot, signInWithEmailAndPassword, onAuthStateChanged, signOut };
+</script><script src="https://checkout.razorpay.com/v1/checkout.js"></script><style>
+:root{--bg:#F8F8F8;--text:#111;--accent:#D6BFA7}
+body{margin:0;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
+h1,h2,h3{font-family:'Playfair Display',serif}
+
+.navbar{position:sticky;top:0;background:#fff;display:flex;justify-content:space-between;padding:18px 40px;border-bottom:1px solid #eee}
+.nav-links a{margin-left:25px;text-decoration:none;color:#111;font-size:14px}
+
+.hero{text-align:center;padding:120px 20px;animation:fade 1s}
+
+.gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:40px;padding:60px}
+.card{background:#fff;padding:15px;border-radius:10px;transition:.3s}
+.card:hover{transform:translateY(-5px);box-shadow:0 20px 40px rgba(0,0,0,.08)}
+.card img{width:100%;border-radius:8px}
+
+button{background:var(--accent);border:none;padding:10px 18px;border-radius:20px;cursor:pointer;margin:5px}
+
+.section{text-align:center;padding:80px 20px;max-width:800px;margin:auto}
+.review-card{background:#fff;padding:15px;border-radius:10px;margin:10px auto;max-width:500px}
+
+input,textarea{width:100%;padding:12px;margin:8px 0;border:1px solid #ddd;border-radius:6px}
+
+.admin-panel{position:fixed;right:20px;bottom:20px;background:#fff;padding:15px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.1);display:none;width:260px}
+.toggle-admin{position:fixed;left:20px;bottom:20px;background:#111;color:#fff;padding:10px 15px;border-radius:20px;cursor:pointer}
+
+footer{text-align:center;padding:30px;font-size:12px;color:#777}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+</style></head>
+<body><div class="navbar">
+  <div>Arté</div>
+  <div class="nav-links">
+    <a href="#">Home</a>
+    <a href="#gallery">Gallery</a>
+    <a href="#reviews">Reviews</a>
+  </div>
+</div><section class="hero">
+  <h1>Art that Speaks</h1>
+  <p>Minimal. Timeless. Collectible.</p>
+</section><section id="gallery" class="gallery"></section><section id="reviews" class="section">
+  <h2>Reviews</h2>
+  <input id="name" placeholder="Your Name">
+  <textarea id="review" placeholder="Your Review"></textarea>
+  <button onclick="addReview()">Submit</button>
+  <div id="reviewList"></div>
+</section><div class="toggle-admin" onclick="toggleAdmin()">Admin</div><div class="admin-panel" id="adminPanel">
+  <h3>Admin Panel</h3>
+  <input id="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
+  <button onclick="login()">Login</button>  <hr>
+  <h4>Add Artwork</h4>
+  <input id="title" placeholder="Title">
+  <input id="price" placeholder="Price">
+  <input id="image" placeholder="Image URL">
+  <button onclick="addArtwork()">Add</button><button onclick="logout()">Logout</button>
+
+</div><footer>© 2026 Arté</footer><script>
+const { collection, addDoc, onSnapshot, signInWithEmailAndPassword, onAuthStateChanged, signOut } = window.firebaseFns;
+const db = window.db;
+const auth = window.auth;
+let isAdmin = false;
+
+function toggleAdmin(){
+  const p=document.getElementById('adminPanel');
+  p.style.display = p.style.display==='block'?'none':'block';
 }
 
-window.login=async()=>{
- try{
-  await signInWithEmailAndPassword(auth,email.value,password.value);
-  alert('Login successful');
- }catch(e){alert('Login failed');}
+function login(){
+  signInWithEmailAndPassword(auth,email.value,password.value)
 }
 
-window.addArt=async()=>{
- await addDoc(collection(db,'artworks'),{t:title.value,p:price.value,i:image.value});
- loadArt();
+onAuthStateChanged(auth,(user)=>{
+  if(user){isAdmin=true;alert('Admin Logged In')}
+  else{isAdmin=false}
+})
+
+function logout(){signOut(auth)}
+
+function addArtwork(){
+  if(!isAdmin) return alert('Login first');
+  addDoc(collection(db,'artworks'),{
+    title:title.value,
+    price:Number(price.value),
+    image:image.value
+  })
 }
 
-async function loadArt(){
- const snap=await getDocs(collection(db,'artworks'));
- gallery.innerHTML='';
- snap.forEach(doc=>{
-  const d=doc.data();
-  gallery.innerHTML+=`<div class='card'>
-  <img src='${d.i}'>
-  <h3>${d.t}</h3>
-  <p>₹${d.p}</p>
-  <button onclick="pay('${d.t}',${d.p})">Buy</button>
-  </div>`;
- });
- animateCards();
+function loadArt(){
+  onSnapshot(collection(db,'artworks'),snap=>{
+    gallery.innerHTML='';
+    snap.forEach(doc=>{
+      const art=doc.data();
+      gallery.innerHTML+=`<div class='card'>
+        <img src='${art.image}'>
+        <h3>${art.title}</h3>
+        <p>₹${art.price}</p>
+        <button onclick='buyOnline(${art.price})'>Pay Online</button>
+        <button onclick='cashOnDelivery("${art.title}",${art.price})'>Cash on Delivery</button>
+      </div>`;
+    })
+  })
 }
 
-function pay(name,price){
- var options={
-  key:"YOUR_RAZORPAY_KEY",
-  amount:price*100,
-  currency:"INR",
-  name:"ArtBrand",
-  description:name,
-  handler:function(){alert('Payment Successful');}
- };
- var rzp=new Razorpay(options);
- rzp.open();
+function buyOnline(amount){
+  const rzp=new Razorpay({
+    key:'YOUR_RAZORPAY_KEY',
+    amount:amount*100,
+    currency:'INR',
+    handler:()=>alert('Payment Successful')
+  });
+  rzp.open();
 }
 
-window.addReview=async()=>{
- await addDoc(collection(db,'reviews'),{n:rname.value,m:rmsg.value});
- loadReviews();
+function cashOnDelivery(title,price){
+  const name = prompt('Enter your name');
+  const address = prompt('Enter delivery address');
+
+  if(!name || !address) return alert('Cancelled');
+
+  addDoc(collection(db,'orders'),{
+    name,
+    address,
+    product:title,
+    price,
+    payment:'COD',
+    status:'Pending'
+  });
+
+  alert('Order placed successfully (Cash on Delivery)');
 }
 
-async function loadReviews(){
- const snap=await getDocs(collection(db,'reviews'));
- reviewList.innerHTML='';
- snap.forEach(doc=>{
-  const d=doc.data();
-  reviewList.innerHTML+=`<p><strong>${d.n}</strong>: ${d.m}</p>`;
- });
+function addReview(){
+  addDoc(collection(db,'reviews'),{
+    name:name.value,
+    review:review.value
+  })
 }
 
-function animateCards(){
- document.querySelectorAll('.card').forEach((c,i)=>{
-  setTimeout(()=>c.classList.add('show'),i*100);
- });
+function loadReviews(){
+  onSnapshot(collection(db,'reviews'),snap=>{
+    reviewList.innerHTML='';
+    snap.forEach(doc=>{
+      const r=doc.data();
+      reviewList.innerHTML+=`<div class='review-card'><b>${r.name}</b><p>${r.review}</p></div>`;
+    })
+  })
 }
 
 loadArt();
